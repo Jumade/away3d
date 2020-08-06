@@ -16,12 +16,12 @@ class ParserUtil
 	public static function toByteArray(data:Dynamic):ByteArray
 	{
 		if (Std.is(data, Class))
-			data = Type.createInstance(data,[]);
+			data = Type.createInstance(data, []);
 		
 		if (Std.is(data, ByteArrayData))
 			return data;
-		else
-			return null;
+		
+		return null;
 	}
 	
 	/**
@@ -37,17 +37,20 @@ class ParserUtil
 	{
 		var ba:ByteArray;
 		
-		if (length==0) length = 0xffffffff;
+		if (length == 0) length = 0xffffffff;
 		
 		if (Std.is(data, String)) {
-			var dS:String = cast data;
-			return dS.substr(0, Std.int(Math.min(length, dS.length)));
+			return cast(data, String).substr(0, length);
 		}
 		
 		ba = toByteArray(data);
 		if (ba != null) {
-			ba.position = 0;
-			return ba.readUTFBytes(Std.int(Math.min(ba.bytesAvailable, length)));
+			try {
+				ba.position = 0;
+				return ba.readUTFBytes(Std.int(Math.min(ba.bytesAvailable, length)));
+			} catch (e:Dynamic) {
+				// e.g. invalid code point (> 0x10ffffu)
+			}
 		}
 		
 		return null;

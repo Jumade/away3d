@@ -14,6 +14,7 @@ import away3d.core.base.SkinnedSubGeometry;
 import away3d.debug.Debug;
 import away3d.entities.Mesh;
 import away3d.loaders.misc.ResourceDependency;
+import away3d.loaders.parsers.utils.ParserUtil;
 import away3d.materials.ColorMaterial;
 import away3d.materials.ColorMultiPassMaterial;
 import away3d.materials.MaterialBase;
@@ -129,14 +130,17 @@ class DAEParser extends ParserBase
 	 */
 	public static function supportsData(data:Dynamic):Bool
 	{
-		var text = Std.string (data);
-		if (text.indexOf("COLLADA") != -1 || text.indexOf("collada") != -1)
+		var str:String = ParserUtil.toString(data);
+		
+		if (str == null)
+			return false;
+		
+		if (str.indexOf("COLLADA") != -1 || str.indexOf("collada") != -1)
 			return true;
 		
 		return false;
 	}
-	
-	
+
 	/**
 	 * @inheritDoc
 	 */

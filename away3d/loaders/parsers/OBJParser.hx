@@ -94,16 +94,15 @@ class OBJParser extends ParserBase
 	 */
 	public static function supportsData(data:Dynamic):Bool
 	{
-		var content:String = ParserUtil.toString(data);
-		var hasV:Bool = false;
-		var hasF:Bool = false;
+		var str:String = ParserUtil.toString(data);
 		
-		if (content != null) {
-			hasV = content.indexOf("\nv ") != -1;
-			hasF = content.indexOf("\nf ") != -1;
-		}
+		if (str == null)
+			return false;
 		
-		return hasV && hasF;
+		if (str.indexOf("\nv ") != -1 && str.indexOf("\nf ") != -1)
+			return true;
+		
+		return false;
 	}
 	
 	/**

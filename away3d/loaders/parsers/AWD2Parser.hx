@@ -159,6 +159,7 @@ class AWD2Parser extends ParserBase
 	{
 		return (ParserUtil.toString(data, 3) == 'AWD');
 	}
+	
 	/**
 	 * @inheritDoc
 	 */

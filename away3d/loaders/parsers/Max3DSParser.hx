@@ -68,16 +68,7 @@ class Max3DSParser extends ParserBase
 	 */
 	public static function supportsData(data:Dynamic):Bool
 	{
-		var ba:ByteArray;
-		
-		ba = ParserUtil.toByteArray(data);
-		if (ba != null) {
-			ba.position = 0;
-			if (ba.readShort() == 0x4d4d)
-				return true;
-		}
-		
-		return false;
+		return (ParserUtil.toString(data, 2) == 'MM');
 	}
 	
 	/**
@@ -113,7 +104,7 @@ class Max3DSParser extends ParserBase
 	{
 		super.startParsing(frameLimit);
 		
-		_byteData = ParserUtil.toByteArray(_data);
+		_byteData = getByteData();
 		_byteData.position = 0;
 		_byteData.endian = Endian.LITTLE_ENDIAN;
 		

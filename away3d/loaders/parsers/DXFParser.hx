@@ -93,6 +93,7 @@ class DXFParser extends ParserBase
 	public static function supportsData(data:Dynamic):Bool
 	{
 		var str:String = ParserUtil.toString(data);
+		
 		if (str == null)
 			return false;
 		

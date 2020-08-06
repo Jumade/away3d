@@ -81,21 +81,7 @@ class AC3DParser extends ParserBase
 	 */
 	public static function supportsData(data:Dynamic):Bool
 	{
-		var ba:ByteArray;
-		var str:String;
-		
-		ba = ParserUtil.toByteArray(data);
-		if (ba != null) {
-			ba.position = 0;
-			str = ba.readUTFBytes(4);
-		} else {
-			str = Std.is(data, String)? cast(data, String).substr(0, 4) : null;
-		}
-		
-		if (str == 'AC3D')
-			return true;
-		
-		return false;
+		return (ParserUtil.toString(data, 4) == 'AC3D');
 	}
 	
 	/**

@@ -73,25 +73,12 @@ class AWD1Parser extends ParserBase
 	 */
 	public static function supportsData(data:Dynamic):Bool
 	{
-		var ba:ByteArray;
-		var str1:String;
-		var str2:String;
-		var readLength:Int = 100;
+		var str:String = ParserUtil.toString(data, 100);
 		
-		ba = ParserUtil.toByteArray(data);
+		if (str == null)
+			return false;
 		
-		if (ba != null) {
-			if (ba.length < 100)
-				readLength = ba.length;
-				
-			ba.position = 0;
-			str1 = ba.readUTFBytes(2);
-			str2 = ba.readUTFBytes(readLength);
-		} else {
-			str1 = Std.is(data, String)? cast(data, String).substr(0, 5) : null;
-			str2 = Std.is(data, String)? cast(data, String).substr(0, readLength) : null;
-		}
-		if ((str1 == '//') && (str2.indexOf("#v:") != -1))
+		if (str.substring(0, 2) == '//' && str.indexOf("#v:") != -1)
 			return true;
 		
 		return false;

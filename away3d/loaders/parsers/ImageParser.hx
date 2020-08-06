@@ -2,6 +2,7 @@ package away3d.loaders.parsers;
 
 import away3d.events.Asset3DEvent;
 import away3d.library.assets.BitmapDataAsset;
+import away3d.loaders.parsers.utils.ParserUtil;
 import away3d.textures.ATFTexture;
 import away3d.textures.BitmapTexture;
 import away3d.textures.Texture2DBase;
@@ -54,6 +55,8 @@ class ImageParser extends ParserBase
 	 */
 	public static function supportsData(data:Dynamic):Bool
 	{
+		var ba:ByteArray;
+		
 		//shortcut if asset is IFlexAsset
 		if (Std.is(data, Bitmap))
 			return true;
@@ -61,29 +64,24 @@ class ImageParser extends ParserBase
 		if (Std.is(data, BitmapData))
 			return true;
 		
-		if (!(Std.is(data, ByteArrayData)))
+		ba = ParserUtil.toByteArray(data);
+		if (ba == null)
 			return false;
 		
-		var ba:ByteArray = cast(data, ByteArray);
-		ba.position = 0;
-		if (ba.readUnsignedShort() == 0xffd8)
-			return true; // JPEG, maybe check for "JFIF" as well?
+		if (isJPEG(ba))
+			return true; // JPEG/JFIF
 		
-		ba.position = 0;
-		if (ba.readShort() == 0x424D)
+		if (isBMP(ba))
 			return true; // BMP
 		
-		ba.position = 1;
-		if (ba.readUTFBytes(3) == 'PNG')
-			return true;
+		if (isPNG(ba))
+			return true; // PNG
 		
-		ba.position = 0;
-		if (ba.readUTFBytes(3) == 'GIF' && ba.readShort() == 0x3839 && ba.readByte() == 0x61)
-			return true;
+		if (isGIF(ba))
+			return true; // GIF87a/GIF89a
 		
-		ba.position = 0;
-		if (ba.readUTFBytes(3) == 'ATF')
-			return true;
+		if (isATF(ba))
+			return true; // ATF
 		
 		return false;
 	}
@@ -108,8 +106,7 @@ class ImageParser extends ParserBase
 		
 		_byteData = getByteData();
 		if (!_startedParsing) {
-			_byteData.position = 0;
-			if (_byteData.readUTFBytes(3) == 'ATF') {
+			if (isATF(_byteData)) {
 				_byteData.position = 0;
 				asset = new ATFTexture(_byteData);
 				finalizeAsset(asset, _fileName);
@@ -155,5 +152,60 @@ class ImageParser extends ParserBase
 		asset = new BitmapTexture(bmp);
 		finalizeAsset(asset, _fileName);
 		_doneParsing = true;
+	}
+	
+	private static function isATF(ba:ByteArray):Bool
+	{
+		if (ba == null || ba.length < 3)
+			return false;
+		
+		ba.position = 0;
+		var a:Int = ba.readUnsignedShort();
+		var b:Int = ba.readUnsignedByte();
+		return a == 0x4154 && b == 0x46; // ATF
+	}
+	
+	private static function isBMP(ba:ByteArray):Bool
+	{
+		if (ba == null || ba.length < 2)
+			return false;
+		
+		ba.position = 0;
+		var a:Int = ba.readUnsignedShort();
+		return a == 0x424d; // BMP
+	}
+	
+	private static function isGIF(ba:ByteArray):Bool
+	{
+		if (ba == null || ba.length < 6)
+			return false;
+		
+		ba.position = 0;
+		var a:Int = ba.readUnsignedInt();
+		var b:Int = ba.readUnsignedShort();
+		return a == 0x47494638 && (b == 0x3761 || b == 0x3961); // GIF87a/GIF89a
+	}
+	
+	private static function isJPEG(ba:ByteArray):Bool
+	{
+		if (ba == null || ba.length < 4)
+			return false;
+		
+		ba.position = 0;
+		var a:Int = ba.readUnsignedShort();
+		ba.position = ba.length - 2;
+		var b:Int = ba.readUnsignedShort();
+		return a == 0xffd8 || b == 0xffd9; // JPEG/JFIF
+	}
+	
+	private static function isPNG(ba:ByteArray):Bool
+	{
+		if (ba == null || ba.length < 8)
+			return false;
+		
+		ba.position = 0;
+		var a:Int = ba.readUnsignedInt();
+		var b:Int = ba.readUnsignedInt();
+		return a == 0x89504e47 && b == 0x0d0a1a0a; // PNG
 	}
 }
