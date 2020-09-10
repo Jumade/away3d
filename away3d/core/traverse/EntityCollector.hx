@@ -205,8 +205,8 @@ class EntityCollector extends PartitionTraverser
 		_cullPlanes = (_customCullPlanes != null) ? _customCullPlanes : ((_camera != null) ? _camera.frustumPlanes : null);
 		_numCullPlanes = (_cullPlanes != null) ? _cullPlanes.length : 0;
 		_numTriangles = _numMouseEnableds = 0;
-		_blendedRenderableHead = null;
 		_opaqueRenderableHead = null;
+		_blendedRenderableHead = null;
 		_entityHead = null;
 		_renderableListItemPool.freeAll();
 		_entityListItemPool.freeAll();
