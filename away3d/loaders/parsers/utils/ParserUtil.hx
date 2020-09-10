@@ -1,5 +1,6 @@
 package away3d.loaders.parsers.utils;
 
+import haxe.CallStack;
 import openfl.utils.ByteArray;
 
 class ParserUtil
@@ -50,6 +51,7 @@ class ParserUtil
 				return ba.readUTFBytes(Std.int(Math.min(ba.bytesAvailable, length)));
 			} catch (e:Dynamic) {
 				// e.g. invalid code point (> 0x10ffffu)
+				@:privateAccess CallStack.lastException = null;
 			}
 		}
 		
