@@ -195,7 +195,7 @@ class ImageParser extends ParserBase
 		var a:Int = ba.readUnsignedShort();
 		ba.position = ba.length - 2;
 		var b:Int = ba.readUnsignedShort();
-		return a == 0xffd8 || b == 0xffd9; // JPEG/JFIF
+		return a == 0xffd8 && b == 0xffd9; // JPEG/JFIF
 	}
 	
 	private static function isPNG(ba:ByteArray):Bool
