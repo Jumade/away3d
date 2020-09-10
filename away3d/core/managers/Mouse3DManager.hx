@@ -17,7 +17,6 @@ import openfl.Vector;
 
 /**
  * Mouse3DManager enforces a singleton pattern and is not intended to be instanced.
- * it provides a manager class for detecting 3D mouse hits on View3D objects and sending out 3D mouse events.
  */
 class Mouse3DManager
 {
@@ -26,43 +25,37 @@ class Mouse3DManager
 	
 	private static var _view3Ds:Map<View3D, Int>;
 	private static var _view3DLookup:Vector<View3D>;
-	private static var _viewCount:Int = 0;
+	private var _viewCount:Int;
 	
 	private var _activeView:View3D;
 	private var _updateDirty:Bool = true;
-	private var _nullVector:Vector3D = new Vector3D();
-	private static var _collidingObject:PickingCollisionVO;
-	private static var _previousCollidingObject:PickingCollisionVO;
+	private static var _nullVector:Vector3D = new Vector3D();
+	private var _collidingObject:PickingCollisionVO;
+	private var _previousCollidingObject:PickingCollisionVO;
 	private static var _collidingViewObjects:Vector<PickingCollisionVO>;
-	private static var _queuedEvents:Vector<MouseEvent3D> = new Vector<MouseEvent3D>();
+	private static var _queuedEvents:Vector<MouseEvent3D>;
 	
 	private var _mouseMoveEvent:MouseEvent = new MouseEvent(MouseEvent.MOUSE_MOVE);
+	private var _mouseUp:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_UP);
+	private var _mouseClick:MouseEvent3D = new MouseEvent3D(MouseEvent3D.CLICK);
+	private var _mouseOut:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_OUT);
+	private var _mouseDown:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_DOWN);
+	private var _mouseMove:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_MOVE);
+	private var _mouseOver:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_OVER);
+	private var _mouseWheel:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_WHEEL);
+	private var _mouseDoubleClick:MouseEvent3D = new MouseEvent3D(MouseEvent3D.DOUBLE_CLICK);
 	
-	private static var _mouseUp:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_UP);
-	private static var _mouseClick:MouseEvent3D = new MouseEvent3D(MouseEvent3D.CLICK);
-	private static var _mouseOut:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_OUT);
-	private static var _mouseDown:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_DOWN);
-	private static var _mouseMove:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_MOVE);
-	private static var _mouseOver:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_OVER);
-	private static var _mouseWheel:MouseEvent3D = new MouseEvent3D(MouseEvent3D.MOUSE_WHEEL);
-	private static var _mouseDoubleClick:MouseEvent3D = new MouseEvent3D(MouseEvent3D.DOUBLE_CLICK);
 	private var _forceMouseMove:Bool;
 	private var _mousePicker:IPicker = PickingType.RAYCAST_FIRST_ENCOUNTERED;
-	private var _childDepth:Int = 0;
-	private static var _previousCollidingView:Int = -1;
-	private static var _collidingView:Int = -1;
-	private var _collidingDownObject:PickingCollisionVO;
-	private var _collidingUpObject:PickingCollisionVO;
 	
 	/**
 	 * Creates a new <code>Mouse3DManager</code> object.
 	 */
 	public function new()
 	{
-		if (_view3Ds == null) {
-			_view3Ds = new Map<View3D, Int>();
-			_view3DLookup = new Vector<View3D>();
-		}
+		_view3Ds = new Map<View3D, Int>();
+		_view3DLookup = new Vector<View3D>();
+		_queuedEvents = new Vector<MouseEvent3D>();
 	}
 	
 	// ---------------------------------------------------------------------
@@ -71,12 +64,10 @@ class Mouse3DManager
 	
 	public function updateCollider(view:View3D):Void
 	{
-		_previousCollidingView = _collidingView;
-		
 		if (view != null) {
 			// Clear the current colliding objects for multiple views if backBuffer just cleared
 			if (view.stage3DProxy.bufferClear)
-				_collidingViewObjects = new Vector<PickingCollisionVO>(_viewCount);
+				_collidingViewObjects = null;
 			
 			var p:Point = view.localToGlobal(new Point(view.mouseX, view.mouseY));
 			if (!view.shareContext) {
@@ -85,7 +76,7 @@ class Mouse3DManager
 				}
 			} else {
 				//if (view.getBounds(view.parent).contains((view.mouseX + view.x)/view.parent.scaleX, (view.mouseY + view.y)/view.parent.scaleY)) {
-					if (_collidingViewObjects == null) 
+					if (_collidingViewObjects == null)
 						_collidingViewObjects = new Vector<PickingCollisionVO>(_viewCount);
 					_collidingObject = _collidingViewObjects[_view3Ds[view]] = _mousePicker.getViewCollision(p.x, p.y, view);
 				//}
@@ -152,7 +143,7 @@ class Mouse3DManager
 	
 	public function addViewLayer(view:View3D):Void
 	{
-		var stg:Stage = view.stage;
+		var stage:Stage = view.stage;
 		
 		// Add instance to mouse3dmanager to fire mouse events for multiple views
 		if (view.stage3DProxy.mouse3DManager == null)
@@ -161,9 +152,7 @@ class Mouse3DManager
 		if (!hasKey(view))
 			_view3Ds.set(view, 0);
 		
-		_childDepth = 0;
-		traverseDisplayObjects(stg);
-		_viewCount = _childDepth;
+		_viewCount = traverseDisplayObjects(stage);
 	}
 	
 	public function enableMouseListeners(view:View3D):Void
@@ -193,6 +182,10 @@ class Mouse3DManager
 	public function dispose():Void
 	{
 		_mousePicker.dispose();
+		_view3Ds = null;
+		_view3DLookup = null;
+		_collidingViewObjects = null;
+		_queuedEvents = null;
 	}
 	
 	// ---------------------------------------------------------------------
@@ -263,7 +256,7 @@ class Mouse3DManager
 		return _view3Ds.exists(view);
 	}
 	
-	private function traverseDisplayObjects(container:DisplayObjectContainer):Void
+	private function traverseDisplayObjects(container:DisplayObjectContainer, depth:Int = 0):Int
 	{
 		var childCount:Int = container.numChildren;
 		var c:Int = 0;
@@ -271,13 +264,14 @@ class Mouse3DManager
 		for (c in 0...childCount) {
 			child = container.getChildAt(c);
 			if (Std.is(child, View3D) && _view3Ds.exists(cast child)) {
-				_view3Ds[cast child] = _childDepth;
-				_view3DLookup[_childDepth] = cast child;
-				_childDepth++;
+				_view3Ds[cast child] = depth;
+				_view3DLookup[depth] = cast child;
+				depth++;
 			}
 			if (Std.is(child, DisplayObjectContainer))
-				traverseDisplayObjects(cast(child, DisplayObjectContainer));
+				depth = traverseDisplayObjects(cast child, depth);
 		}
+		return depth;
 	}
 	
 	// ---------------------------------------------------------------------

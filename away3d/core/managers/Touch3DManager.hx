@@ -11,6 +11,9 @@ import openfl.events.TouchEvent;
 import openfl.geom.Vector3D;
 import openfl.Vector;
 
+/**
+ * Touch3DManager enforces a singleton pattern and is not intended to be instanced.
+ */
 class Touch3DManager
 {
 	public var forceTouchMove(get, set):Bool;
@@ -18,17 +21,16 @@ class Touch3DManager
 	public var view(never, set):View3D;
 	
 	private var _updateDirty:Bool = true;
-	private var _nullVector:Vector3D = new Vector3D();
+	private static var _nullVector:Vector3D = new Vector3D();
 	private var _numTouchPoints:Int;
 	private var _touchPoint:TouchPoint;
+	private static var _touchPoints:Vector<TouchPoint>;
+	private static var _touchPointFromId:Map<Int, TouchPoint>;
 	private var _collidingObject:PickingCollisionVO;
 	private var _previousCollidingObject:PickingCollisionVO;
 	private static var _collidingObjectFromTouchId:Map<Int, PickingCollisionVO>;
 	private static var _previousCollidingObjectFromTouchId:Map<Int, PickingCollisionVO>;
-	private static var _queuedEvents:Vector<TouchEvent3D> = new Vector<TouchEvent3D>();
-	
-	private var _touchPoints:Vector<TouchPoint>;
-	private var _touchPointFromId:Map<Int, TouchPoint>;
+	private static var _queuedEvents:Vector<TouchEvent3D>;
 	
 	private var _touchMoveEvent:TouchEvent = new TouchEvent(TouchEvent.TOUCH_MOVE);
 	
@@ -42,6 +44,7 @@ class Touch3DManager
 		_touchPointFromId = new Map<Int, TouchPoint>();
 		_collidingObjectFromTouchId = new Map<Int, PickingCollisionVO>();
 		_previousCollidingObjectFromTouchId = new Map<Int, PickingCollisionVO>();
+		_queuedEvents = new Vector<TouchEvent3D>();
 	}
 	
 	// ---------------------------------------------------------------------
@@ -129,6 +132,7 @@ class Touch3DManager
 		_touchPointFromId = null;
 		_collidingObjectFromTouchId = null;
 		_previousCollidingObjectFromTouchId = null;
+		_queuedEvents = null;
 	}
 	
 	// ---------------------------------------------------------------------
@@ -152,7 +156,7 @@ class Touch3DManager
 		if (collider != null) {
 			// Object.
 			event.object = collider.entity;
-			event.renderable = collider.renderable;	
+			event.renderable = collider.renderable;
 			// UV.
 			event.uv = collider.uv;
 			// Position.
