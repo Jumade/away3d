@@ -50,11 +50,10 @@ class ShaderPicker implements IPicker
 	private var _hitRenderable:IRenderable;
 	private var _hitEntity:Entity;
 	private var _localHitPosition:Vector3D = new Vector3D();
+	private var _localHitNormal:Vector3D = new Vector3D();
 	private var _hitUV:Point = new Point();
 	private var _faceIndex:Int;
 	private var _subGeometryIndex:Int;
-	
-	private var _localHitNormal:Vector3D = new Vector3D();
 	
 	private var _rayPos:Vector3D = new Vector3D();
 	private var _rayDir:Vector3D = new Vector3D();
@@ -82,7 +81,7 @@ class ShaderPicker implements IPicker
 	{
 		_id = new Vector<Float>(4, true);
 		_viewportData = new Vector<Float>(4, true); // first 2 contain scale, last 2 translation
-		_boundOffsetScale = new Vector<Float>(8, true); // first 2 contain scale, last 2 translation
+		_boundOffsetScale = new Vector<Float>(8, true);
 		_boundOffsetScale[3] = 0;
 		_boundOffsetScale[7] = 1;
 	}
@@ -173,7 +172,7 @@ class ShaderPicker implements IPicker
 		
 		_interactives.length = _interactiveId = 0;
 		
-		if (_objectProgram3D == null) 
+		if (_objectProgram3D == null)
 			initObjectProgram3D();
 		_context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
 		_context.setDepthTest(true, Context3DCompareMode.LESS);
@@ -501,14 +500,21 @@ class ShaderPicker implements IPicker
 	
 	public function dispose():Void
 	{
-		_bitmapData.dispose();
-		if (_triangleProgram3D != null)
-			_triangleProgram3D.dispose();
+		_stage3DProxy = null;
+		_context = null;
+		
 		if (_objectProgram3D != null)
 			_objectProgram3D.dispose();
-		_triangleProgram3D = null;
+		if (_triangleProgram3D != null)
+			_triangleProgram3D.dispose();
+		if (_bitmapData != null)
+			_bitmapData.dispose();
 		_objectProgram3D = null;
+		_triangleProgram3D = null;
 		_bitmapData = null;
+		
+		_interactives.length = 0;
+		
 		_hitRenderable = null;
 		_hitEntity = null;
 	}

@@ -24,13 +24,13 @@ class RaycastPicker implements IPicker
 	// TODO: add option of finding best hit?
 	
 	private var _findClosestCollision:Bool;
-	private var _raycastCollector:RaycastCollector = new RaycastCollector();
-	private var _ignoredEntities:Array<Entity> = new Array<Entity>();
+	
+	private var _raycastCollector:RaycastCollector;
+	private var _ignoredEntities:Array<Entity>;
 	private var _onlyMouseEnabled:Bool = true;
 	
-	private var _entities:Vector<Entity>;
+	private var _entities:Vector<Entity> = new Vector<Entity>();
 	private var _numEntities:Int;
-	private var _hasCollisions:Bool;
 	
 	/**
 	 * @inheritDoc
@@ -55,7 +55,6 @@ class RaycastPicker implements IPicker
 	public function new(findClosestCollision:Bool)
 	{
 		_findClosestCollision = findClosestCollision;
-		_entities = new Vector<Entity>();
 	}
 
 	/**
@@ -63,9 +62,7 @@ class RaycastPicker implements IPicker
 	 */
 	public function getViewCollision(x:Float, y:Float, view:View3D):PickingCollisionVO
 	{
-		//cast ray through the collection of entities on the view
 		var collector:EntityCollector = view.entityCollector;
-		//var i:uint;
 		
 		if (collector.numMouseEnableds == 0)
 			return null;
@@ -97,7 +94,7 @@ class RaycastPicker implements IPicker
 		}
 		
 		//early out if no collisions detected
-		if (_numEntities == 0) 
+		if (_numEntities == 0)
 			return null;
 		
 		return getPickingCollisionVO();
@@ -108,6 +105,9 @@ class RaycastPicker implements IPicker
 	 */
 	public function getSceneCollision(position:Vector3D, direction:Vector3D, scene:Scene3D):PickingCollisionVO
 	{
+		if (_raycastCollector == null)
+			_raycastCollector = new RaycastCollector();
+		
 		//clear collector
 		_raycastCollector.clear();
 		
@@ -164,6 +164,9 @@ class RaycastPicker implements IPicker
 		if (_onlyMouseEnabled && (!entity._ancestorsAllowMouseEnabled || !entity.mouseEnabled))
 			return true;
 		
+		if (_ignoredEntities == null)
+			return false;
+		
 		var ignoredEntity:Entity;
 		for (ignoredEntity in _ignoredEntities) {
 			if (ignoredEntity == entity)
@@ -184,7 +187,6 @@ class RaycastPicker implements IPicker
 		_entities.length = _numEntities;
 		
 		// Sort entities from closest to furthest.
-		// _entities =
 		_entities.sort(sortOnNearT);
 		
 		// ---------------------------------------------------------------------
@@ -242,5 +244,7 @@ class RaycastPicker implements IPicker
 	
 	public function dispose():Void
 	{
+		_raycastCollector = null;
+		_entities.length = 0;
 	}
 }
