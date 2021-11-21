@@ -23,7 +23,8 @@ class BitmapTexture extends Texture2DBase
 		super();
 		
 		this.bitmapData = bitmapData;
-		_generateMipmaps = _hasMipmaps = generateMipmaps;
+        //fully disable renerated mipmaps
+		_generateMipmaps = _hasMipmaps = false;
 	}
 	
 	public var bitmapData(get, set):BitmapData;
